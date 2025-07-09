@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mobile Camera → ASCII</title>
+  <style>
+    .copy-button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    .copy-button:hover {
+      background-color: #45a049;
+    }
+    .copy-success {
+      background-color: #28a745;
+    }
+    #ascii-result {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <h2>📸 Take a Photo, See ASCII!</h2>
+  <form enctype="multipart/form-data" method="POST" action="/upload">
+    <input type="file" name="image" accept="image/*" capture="environment" required />
+    <br><br>
+    <button type="submit">Upload & Convert</button>
+  </form>
+  <div id="ascii-result"></div>
+  
+  <script>
+    function copyAscii() {
+      const asciiElement = document.querySelector('#ascii-result pre');
+      if (asciiElement) {
+        // Create a temporary element to get plain text
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = asciiElement.innerHTML;
+        const plainText = tempDiv.textContent || tempDiv.innerText || '';
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(plainText).then(() => {
+          const button = document.getElementById('copyButton');
+          button.textContent = 'Copied! ✓';
+          button.classList.add('copy-success');
+          setTimeout(() => {
+            button.textContent = 'Copy ASCII Art';
+            button.classList.remove('copy-success');
+          }, 30000);
+        }).catch(err => {
+          console.error('Failed to copy: ', err);
+          alert('Failed to copy ASCII art');
+        });
+      }
+    }
+    
+    // Handle form submission with AJAX
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.querySelector('form');
+      const resultDiv = document.getElementById('ascii-result');
+      
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        
+        fetch('/upload', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+          resultDiv.innerHTML = data;
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          resultDiv.innerHTML = '<p>Error uploading image</p>';
+        });
+      });
+    });
+  </script>
+</body>
+</html>
