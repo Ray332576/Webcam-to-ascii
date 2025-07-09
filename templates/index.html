@@ -1,58 +1,194 @@
-<div id="asciiOutput"></div>
-
-<!-- JS download logic -->
-<script>
-  const pcBtn = document.getElementById('pcMode');
-  const mobileBtn = document.getElementById('mobileMode');
-  const body = document.body;
-
-  function setMode(mode) {
-    if (mode === 'mobile') {
-      body.classList.add('mobile-mode');
-      pcBtn.classList.remove('active');
-      pcBtn.setAttribute('aria-pressed', 'false');
-      mobileBtn.classList.add('active');
-      mobileBtn.setAttribute('aria-pressed', 'true');
-    } else {
-      body.classList.remove('mobile-mode');
-      mobileBtn.classList.remove('active');
-      mobileBtn.setAttribute('aria-pressed', 'false');
-      pcBtn.classList.add('active');
-      pcBtn.setAttribute('aria-pressed', 'true');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Image to Colored ASCII</title>
+  <style>
+    body {
+      background: #121212;
+      color: #eee;
+      font-family: monospace, monospace;
+      text-align: center;
+      padding: 2rem;
+      margin: 0;
+      transition: all 0.3s ease;
     }
-  }
 
-  pcBtn.addEventListener('click', () => setMode('pc'));
-  mobileBtn.addEventListener('click', () => setMode('mobile'));
-
-  const form = document.getElementById('uploadForm');
-  const asciiOutput = document.getElementById('asciiOutput');
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(form);
-    asciiOutput.innerHTML = 'Processing...';
-
-    try {
-      const response = await fetch('/upload', {
-        method: 'POST',
-        body: formData
-      });
-      const html = await response.text();
-      asciiOutput.innerHTML = html;
-    } catch (err) {
-      asciiOutput.textContent = 'Error uploading image.';
+    .mode-menu {
+      margin-bottom: 2rem;
     }
-  });
+    .mode-menu button {
+      background: #333;
+      color: #eee;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      margin: 0 0.3rem;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1rem;
+      transition: background 0.2s ease;
+    }
+    .mode-menu button.active {
+      background: #0f62fe;
+      color: white;
+    }
+    .mode-menu button:hover:not(.active) {
+      background: #555;
+    }
 
-  function downloadAscii() {
-    const textArea = document.getElementById('asciiText');
-    if (!textArea) return alert('No ASCII to download!');
-    const blob = new Blob([textArea.value], { type: 'text/plain' });
-    const link = document.createElement('a');
-    link.download = 'ascii-art.txt';
-    link.href = URL.createObjectURL(blob);
-    link.click();
-    URL.revokeObjectURL(link.href);
-  }
-</script>
+    h1 {
+      margin-bottom: 1rem;
+      font-weight: normal;
+    }
+
+    form {
+      margin-bottom: 2rem;
+    }
+
+    input[type="file"] {
+      background: #333;
+      color: #eee;
+      border: none;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button[type="submit"] {
+      background: #0f62fe;
+      border: none;
+      color: white;
+      font-weight: bold;
+      padding: 0.6rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-left: 1rem;
+      transition: background 0.2s ease;
+    }
+
+    button[type="submit"]:hover {
+      background: #0353e9;
+    }
+
+    .download-button {
+      background: #198754;
+      border: none;
+      color: white;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      transition: background 0.2s ease;
+    }
+
+    .download-button:hover {
+      background: #146c43;
+    }
+
+    pre {
+      font-size: 6px;
+      line-height: 6px;
+      font-family: monospace, monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #000;
+      padding: 1rem;
+      border-radius: 8px;
+      display: inline-block;
+      max-width: 100vw;
+      overflow-x: auto;
+      color: white;
+      transition: font-size 0.3s ease, line-height 0.3s ease;
+    }
+
+    body.mobile-mode pre {
+      font-size: 8px;
+      line-height: 8px;
+      max-width: 90vw;
+    }
+    body.mobile-mode input[type="file"],
+    body.mobile-mode button[type="submit"] {
+      padding: 1rem 1.5rem;
+      font-size: 1.2rem;
+    }
+    body.mobile-mode .download-button {
+      padding: 1rem 1.5rem;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="mode-menu" aria-label="Select Display Mode">
+    <button id="pcMode" class="active" aria-pressed="true">PC Mode</button>
+    <button id="mobileMode" aria-pressed="false">Mobile Mode</button>
+  </div>
+
+  <h1>Upload Image to Colored ASCII</h1>
+  <form action="/upload" method="POST" enctype="multipart/form-data" id="uploadForm">
+    <input type="file" name="image" accept="image/*" required />
+    <button type="submit">Convert</button>
+  </form>
+
+  <div id="asciiOutput"></div>
+  <button class="download-button" onclick="downloadAscii()">Download</button>
+
+  <script>
+    const pcBtn = document.getElementById('pcMode');
+    const mobileBtn = document.getElementById('mobileMode');
+    const body = document.body;
+
+    function setMode(mode) {
+      if (mode === 'mobile') {
+        body.classList.add('mobile-mode');
+        pcBtn.classList.remove('active');
+        pcBtn.setAttribute('aria-pressed', 'false');
+        mobileBtn.classList.add('active');
+        mobileBtn.setAttribute('aria-pressed', 'true');
+      } else {
+        body.classList.remove('mobile-mode');
+        mobileBtn.classList.remove('active');
+        mobileBtn.setAttribute('aria-pressed', 'false');
+        pcBtn.classList.add('active');
+        pcBtn.setAttribute('aria-pressed', 'true');
+      }
+    }
+
+    pcBtn.addEventListener('click', () => setMode('pc'));
+    mobileBtn.addEventListener('click', () => setMode('mobile'));
+
+    const form = document.getElementById('uploadForm');
+    const asciiOutput = document.getElementById('asciiOutput');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      asciiOutput.innerHTML = 'Processing...';
+
+      try {
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const html = await response.text();
+        asciiOutput.innerHTML = html;
+      } catch (err) {
+        asciiOutput.textContent = 'Error uploading image.';
+      }
+    });
+
+    function downloadAscii() {
+      const pre = asciiOutput.querySelector('pre');
+      if (!pre) return alert('No ASCII to download!');
+      const blob = new Blob([pre.textContent], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.download = 'ascii-art.txt';
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+  </script>
+</body>
+</html>
